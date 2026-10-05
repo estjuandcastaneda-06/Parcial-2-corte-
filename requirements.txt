@@ -1,0 +1,7 @@
+streamlit>=1.50
+plotly>=5.20
+pandas
+numpy
+matplotlib>=3.8
+# opcional (simulación física; en Windows pide compilador o Python 3.10/3.11):
+# pybullet
