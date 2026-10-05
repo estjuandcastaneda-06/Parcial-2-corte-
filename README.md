@@ -5,7 +5,7 @@ Proyecto de Micros (UMNG). **Núcleo común:** contador de monedas → banda →
 los vasos de **una** denominación ($50, $100, $200, $500 o $1.000), los lleva al nido dejando feromona, y su sensor de color se evalúa con una
 **matriz de confusión**: al acumular errores el carrito vuelve al nido (el objetivo) a dejar lo que lleve y a recalibrar el sensor.
 
-> Integrantes: [nombres del grupo] · Materia: Microcontroladores / Mecatrónica · Fecha: octubre 2026
+
 
 ---
 
@@ -21,7 +21,7 @@ los vasos de **una** denominación ($50, $100, $200, $500 o $1.000), los lleva a
 | Peso y potencia (carrito + sensores) | `planos/03_pesos_consumo` | Hecho (estimado, falta pesar piezas reales) |
 | Matriz de confusión aplicada a las hormigas | `swarm.py` + `planos/07_matriz_confusion` + `experimentos_confusion.py` | Hecho en simulación |
 | Simulación en PyBullet | `pybullet_sim/` | URDF validado; **sin correr** |
-| Presentación | https://claude.ai/artifact/ESERMjTicbdoh4pJRDs1cV (privada: descárgala desde ahí como PDF/PPT y súbela también) | Hecho |
+
 
 **Sube la carpeta `monedas_app/` completa.** Los `.png` y `.pdf` de `planos/` son lo que ve el profe; el resto es el código que los genera y los prueba.
 No subas `__pycache__/` ni `.pio/` (ya están en `.gitignore`).
@@ -103,7 +103,7 @@ Carga el URDF de `carrito.urdf`, 5 carritos y los 3 obstáculos. **No lo pude co
 ### 3.7 Dashboard del núcleo (opcional)
 `streamlit run app.py` o abrir `interfaz.html`. Muestra contador/banda/monedas con datos simulados. **Aún no muestra el enjambre.**
 
-## 4. Qué está probado y qué no (para no prometer de más)
+## 4. Qué está probado y qué no 
 
 | Cosa | Estado real |
 |---|---|
@@ -116,11 +116,6 @@ Carga el URDF de `carrito.urdf`, 5 carritos y los 3 obstáculos. **No lo pude co
 | Ruido del sensor de color en la simulación | **Supuesto**: hay que medirlo con el TCS3200 real |
 | Regla de errores (E_MAX) | **Interpretación nuestra** de lo que dijo el profe: confirmarla con él |
 
-## 5. Pendientes
-- Firmware de la **estación central**: banda, brazo, báscula del nido y el mensaje de verificación ESP-NOW que el carrito espera (`MSG_VERIF`). Los pines están en el plano 6.
-- Actualizar `interfaz.html` / `app.py` para mostrar el enjambre en vez del dron.
-- Armar un carrito, pesar y medir, y corregir `datos_carrito.py`.
-- Correr PyBullet en el entorno del curso.
 
 ## 6. Subir a GitHub
 ```
@@ -133,4 +128,4 @@ git branch -M main
 git remote add origin https://github.com/<tu-usuario>/<tu-repo>.git
 git push -u origin main
 ```
-Pesa ≈ 2,5 MB. Si el profe pide estructura como la del repo `U_Militar`, copia la carpeta `monedas_app/` como una carpeta nueva dentro de él (por ejemplo `13) Enjambre_Carritos/`).
+
