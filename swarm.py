@@ -1,31 +1,3 @@
-"""Enjambre de 5 carritos tipo hormiga (ACO estigmérgico) con matriz de confusión.
-
-Cada carrito (hormiga) tiene UNA denominación objetivo ($50, $100, $200, $500 o
-$1.000): su misión es encontrar el vasito de SU moneda y llevarlo al nido/meta.
-Solo conoce lo que siente cerca y la feromona que deja el resto del enjambre
-(estigmergia); no hay control central.
-
-Cadena de decisión de cada hormiga (así se porta al ESP32):
-  VL53L0X detecta un objeto ≤ SENSOR_R  ->  se acerca hasta tener el vaso entre
-  los dedos de la pinza  ->  TCS3200 lee el color (T_LECTURA)  ->  clasifica
-  (centroide más cercano)  ->  si coincide con SU denominación lo toma, si no lo
-  rechaza y sigue explorando.
-
-Matriz de confusión (idea del profe): filas = denominación REAL del vaso,
-columnas = lo que PREDIJO el sensor de color. Con ella:
-  * se mide qué denominaciones se confunden (p. ej. $50 plateada vs $200 beige);
-  * una lectura dudosa (margen bajo entre el mejor y el segundo centroide) se
-    RELEE y se promedia (el ruido baja con √n);
-  * cada hormiga cuenta sus ERRORES CONFIRMADOS: vasos equivocados que la
-    verificación del nido descubre (la báscula HX711 conoce el peso de cada
-    denominación);
-  * cuando una hormiga acumula E_MAX errores deja de buscar, entrega lo que
-    lleve en el OBJETIVO (nido), recalibra el sensor de color con la tarjeta de
-    referencia del nido y reinicia su contador.
-(La regla exacta es una interpretación de lo que dijo el profe: confirmarla con él.)
-
-Escala física: 1 celda = CELL_M = 50 mm -> arena de 42 x 24 celdas = 2100 x 1200 mm.
-"""
 from __future__ import annotations
 
 import math
@@ -114,7 +86,7 @@ class Carrito:
     y: float
     color: str
     denom_obj: int = 50
-    # explorar | acercar | leyendo | transportar | entregando | retorno | recalibrando
+
     estado: str = "explorar"
     objetivo: Vaso | None = None
     entregados: int = 0
@@ -169,16 +141,13 @@ class Enjambre:
         self.valor_total = 0
         self.hist_tiempos: list[float] = []
         self._t_reclamo: dict[int, float] = {}
-        # matriz de confusión global: conf[real][predicho]
         self.conf = {a: {b: 0 for b in DENOMS} for a in DENOMS}
 
-    # ---------------------------------------------------------- entorno
     def _spawn_vaso(self):
         presentes = {d: sum(1 for v in self.vasos if v.denom == d) for d in DENOMS}
         minimo = min(presentes.values())
         elegibles = [d for d in DENOMS if presentes[d] == minimo]
         for _ in range(40):
-            # lejos de paredes y obstáculos: un vaso a menos de ~3,5 celdas (175 mm) de una pared no se puede alcanzar con la pinza
             x = self.rng.uniform(30, W - 3.5)
             y = self.rng.uniform(3.5, H - 3.5)
             if en_obstaculo(x, y, 3.5):
@@ -212,7 +181,6 @@ class Enjambre:
         if 0 <= yi < H and 0 <= xi < W:
             self.tau[yi][xi] = min(300.0, self.tau[yi][xi] + cant)
 
-    # ---------------------------------------------------------- sensor de color + confusión
     def _leer_color(self, c: Carrito, v: Vaso):
         base = CROM[v.denom]
         amb = self.rng.uniform(0.0, 0.12)            # luz blanca ambiente mezclada
@@ -245,7 +213,7 @@ class Enjambre:
         return {"etiquetas": DENOMS, "matriz": m, "total": total, "exactitud": acc,
                 "precision": prec, "sensibilidad": rec}
 
-    # ---------------------------------------------------------- control de un carrito
+
     def _hito(self, x: float, hacia_zona: bool):
         """Próximo punto del corredor dado (cruce de obstáculos) hacia donde dirigirse.
         None => ya se llegó al tramo libre (zona de vasos, o el nido de vuelta)."""
@@ -356,7 +324,6 @@ class Enjambre:
 
     def _step_carrito(self, c: Carrito, dt):
         c.t_estado += dt
-        # deriva lenta del sensor de color (temperatura / luz)
         for i in range(3):
             c.sesgo[i] += self.rng.gauss(0, DERIVA * math.sqrt(dt))
 
@@ -388,12 +355,12 @@ class Enjambre:
         elif c.estado == "acercar":
             v = c.objetivo
             d = math.hypot(v.x - c.x, v.y - c.y)
-            if d <= OFFSET_PINZA + 0.3:                # vaso entre los dedos: a leer el color
+            if d <= OFFSET_PINZA + 0.3:               
                 c.lecturas = []
                 c.t_lectura_total = T_LECTURA
                 self._cambiar(c, "leyendo")
                 return
-            if c.t_estado > T_ACERCAR_MAX:             # no llegó (atascado): suelta el vaso y sigue
+            if c.t_estado > T_ACERCAR_MAX:           
                 c.veto[v.id] = self.t + T_VETO
                 v.reclamado = False
                 self._t_reclamo.pop(v.id, None)
@@ -421,7 +388,7 @@ class Enjambre:
                 return
             self.conf[v.denom][pred] += 1               # matriz de confusión (verdad vs predicho)
             if pred == c.denom_obj:
-                self._cambiar(c, "transportar")         # lo toma con la pinza
+                self._cambiar(c, "transportar")        
             else:
                 c.rechazos += 1
                 c.veto[v.id] = self.t + T_VETO
@@ -472,7 +439,6 @@ class Enjambre:
                 c.veto.clear()
                 self._cambiar(c, "explorar")
 
-    # ---------------------------------------------------------- API pública
     def step(self, dt: float):
         n = max(1, math.ceil(dt / 0.1))
         h = dt / n
