@@ -1,0 +1,164 @@
+<?xml version="1.0"?>
+<!--
+  Carrito hormiga (agente del enjambre) — modelo para PyBullet.
+  Coherente con planos/datos_carrito.py y con la maqueta.urdf del repo del curso
+  (11) Proyecto_Final): misma pinza de dos dedos que los brazos de la banda.
+
+  Medidas (m), origen en el centro del chasis (130 x 100 mm), z = 0 a 30,5 mm del piso:
+    chasis 130 x 100 mm (placas de 3 y 2 mm separadas 30 mm; aquí un solo bloque de 35 mm de alto)
+    ruedas Ø42 x 15 mm, trocha 110 mm, eje a 50 mm del borde trasero (x = -15 mm del centro)
+    rueda loca Ø10 mm al frente · VL53L0X en la placa superior · TCS3200 en la palma de la pinza
+  Masa total ≈ 0,29 kg (ver planos/03_pesos_consumo.png). Se asume que NO está probado en PyBullet.
+-->
+<robot name="carrito_hormiga">
+
+  <material name="naranja"><color rgba="0.72 0.28 0.06 1"/></material>
+  <material name="gris_chasis"><color rgba="0.29 0.31 0.34 1"/></material>
+  <material name="negro_rueda"><color rgba="0.08 0.08 0.09 1"/></material>
+  <material name="blanco_pinza"><color rgba="0.92 0.90 0.85 1"/></material>
+  <material name="cian_sensor"><color rgba="0.12 0.55 0.52 1"/></material>
+  <material name="rojo_sensor"><color rgba="0.85 0.31 0.31 1"/></material>
+
+  <link name="base_link">
+    <visual>
+      <geometry><box size="0.13 0.10 0.035"/></geometry>
+      <material name="naranja"/>
+    </visual>
+    <collision>
+      <geometry><box size="0.13 0.10 0.035"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.24"/>
+      <inertia ixx="0.00045" ixy="0" ixz="0" iyy="0.00065" iyz="0" izz="0.00095"/>
+    </inertial>
+  </link>
+
+  <!-- ESP32 + electrónica de la placa superior (solo visual) -->
+  <link name="tapa_electronica">
+    <visual>
+      <geometry><box size="0.06 0.04 0.013"/></geometry>
+      <material name="gris_chasis"/>
+    </visual>
+  </link>
+  <joint name="tapa_joint" type="fixed">
+    <parent link="base_link"/><child link="tapa_electronica"/>
+    <origin xyz="-0.003 0 0.024" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Rueda motriz izquierda (y negativa = izquierda en la planta) -->
+  <link name="rueda_izq">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.021" length="0.015"/></geometry>
+      <material name="negro_rueda"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.021" length="0.015"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.011"/>
+      <inertia ixx="0.000002" ixy="0" ixz="0" iyy="0.000003" iyz="0" izz="0.000002"/>
+    </inertial>
+  </link>
+  <joint name="rueda_izq_joint" type="continuous">
+    <parent link="base_link"/><child link="rueda_izq"/>
+    <origin xyz="-0.015 -0.055 -0.0095" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <dynamics friction="0.02" damping="0.001"/>
+  </joint>
+
+  <!-- Rueda motriz derecha -->
+  <link name="rueda_der">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.021" length="0.015"/></geometry>
+      <material name="negro_rueda"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.021" length="0.015"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.011"/>
+      <inertia ixx="0.000002" ixy="0" ixz="0" iyy="0.000003" iyz="0" izz="0.000002"/>
+    </inertial>
+  </link>
+  <joint name="rueda_der_joint" type="continuous">
+    <parent link="base_link"/><child link="rueda_der"/>
+    <origin xyz="-0.015 0.055 -0.0095" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <dynamics friction="0.02" damping="0.001"/>
+  </joint>
+
+  <!-- Rueda loca frontal (bola Ø10), sin motor: centro a 5 mm del piso -->
+  <link name="rueda_loca">
+    <visual><geometry><sphere radius="0.005"/></geometry><material name="negro_rueda"/></visual>
+    <collision><geometry><sphere radius="0.005"/></geometry></collision>
+    <inertial><mass value="0.006"/><inertia ixx="1e-7" ixy="0" ixz="0" iyy="1e-7" iyz="0" izz="1e-7"/></inertial>
+  </link>
+  <joint name="rueda_loca_joint" type="continuous">
+    <parent link="base_link"/><child link="rueda_loca"/>
+    <origin xyz="0.059 0 -0.0255" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <!-- VL53L0X: placa superior, 105 mm del borde trasero (x = +40 mm del centro), mira al frente -->
+  <link name="sensor_distancia">
+    <visual>
+      <geometry><box size="0.004 0.018 0.013"/></geometry>
+      <material name="rojo_sensor"/>
+    </visual>
+  </link>
+  <joint name="sensor_distancia_joint" type="fixed">
+    <parent link="base_link"/><child link="sensor_distancia"/>
+    <origin xyz="0.040 0 0.0285" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Pinza frontal de dos dedos: base fija entre las placas, TCS3200 en la palma -->
+  <link name="pinza_base">
+    <visual><geometry><box size="0.01 0.05 0.028"/></geometry><material name="gris_chasis"/></visual>
+    <collision><geometry><box size="0.01 0.05 0.028"/></geometry></collision>
+    <inertial><mass value="0.01"/><inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/></inertial>
+  </link>
+  <joint name="pinza_base_joint" type="fixed">
+    <parent link="base_link"/><child link="pinza_base"/>
+    <origin xyz="0.072 0 0.0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="sensor_color">
+    <visual>
+      <geometry><box size="0.010 0.028 0.028"/></geometry>
+      <material name="cian_sensor"/>
+    </visual>
+  </link>
+  <joint name="sensor_color_joint" type="fixed">
+    <parent link="pinza_base"/><child link="sensor_color"/>
+    <origin xyz="0.0095 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="dedo_izq">
+    <visual><origin xyz="0.0225 0 0" rpy="0 0 0"/><geometry><box size="0.045 0.008 0.030"/></geometry><material name="blanco_pinza"/></visual>
+    <collision><origin xyz="0.0225 0 0" rpy="0 0 0"/><geometry><box size="0.045 0.008 0.030"/></geometry></collision>
+    <inertial><mass value="0.004"/><inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/></inertial>
+  </link>
+  <joint name="dedo_izq_joint" type="revolute">
+    <parent link="pinza_base"/><child link="dedo_izq"/>
+    <origin xyz="-0.005 -0.020 0" rpy="0 0 0"/>
+    <axis xyz="0 0 -1"/>
+    <limit lower="0" upper="0.7" effort="2" velocity="2"/>
+  </joint>
+
+  <link name="dedo_der">
+    <visual><origin xyz="0.0225 0 0" rpy="0 0 0"/><geometry><box size="0.045 0.008 0.030"/></geometry><material name="blanco_pinza"/></visual>
+    <collision><origin xyz="0.0225 0 0" rpy="0 0 0"/><geometry><box size="0.045 0.008 0.030"/></geometry></collision>
+    <inertial><mass value="0.004"/><inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/></inertial>
+  </link>
+  <joint name="dedo_der_joint" type="revolute">
+    <parent link="pinza_base"/><child link="dedo_der"/>
+    <origin xyz="-0.005 0.020 0" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="0" upper="0.7" effort="2" velocity="2"/>
+  </joint>
+
+</robot>
