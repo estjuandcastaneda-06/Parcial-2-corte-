@@ -191,26 +191,3 @@ Prueba con el carrito **levantado** y en este orden: `t` (VL53L0X y TCS3200), `w
 
 **PyBullet (en el computador del curso):** `pip install pybullet` y `python pybullet_sim/swarm_pybullet.py`.
 
-## 9. Estado real (qué está probado y qué no)
-
-| Cosa | Estado |
-|---|---|
-| `swarm.py`, experimentos, planos | Corridos y revisados |
-| Firmware del carrito | **Compila** (core ESP32 2.0.17: 15,6 % RAM, 62,5 % flash). Core 3.x sin probar. **Nunca se cargó a un ESP32** |
-| `carrito.urdf` | XML válido; `swarm_pybullet.py` solo con la sintaxis revisada |
-| Pesos, consumos, medidas de N20/ruedas/vaso | **Estimaciones**: pesar y medir las piezas reales |
-| Ruido del sensor de color | **Supuesto** de la simulación |
-| Regla de errores | **Interpretación nuestra**; confirmar con el profe |
-
-**Pendiente:** firmware de la estación central, actualizar el dashboard al enjambre, armar un carrito y calibrar, correr PyBullet.
-
-## 10. Subir a GitHub
-
-```
-cd monedas_app
-git init && git add . && git status      # revisa que no entren __pycache__ ni .pio
-git commit -m "Enjambre de carritos hormiga: planos, firmware, simulación y matriz de confusión"
-git branch -M main
-git remote add origin https://github.com/<usuario>/<repo>.git && git push -u origin main
-```
-Además de la carpeta, sube **la presentación exportada** (el link de Claude es privado: descárgala como PDF/PPT desde ahí). No hay nada más fuera de `monedas_app/` que haga falta.
